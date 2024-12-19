@@ -9,7 +9,7 @@ Welcome to **My Novel Library**, an elegant and interactive web application for 
 - Save your favorite books for easy access.
 
 Designed with an intuitive interface, **My Novel Library** makes discovering your next great read effortless and enjoyable. Dive into the world of books and start building your personalized library today! 📖✨.
-- click here to get the application https://maurinemutinda72.github.io/Novel_lib/
+- click here to get the application [https://maurinemutinda72.github.io/Novel_lib/](https://maurinemutinda72.github.io/Novel_library/)
 
 
 
