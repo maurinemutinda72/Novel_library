@@ -1,170 +1,153 @@
-// This project will allow the user to search, filter and get descriptions for a novel
-document.addEventListener('DOMContentLoaded', function () {
-    //  HTML elements
+document.addEventListener('DOMContentLoaded', () => { 
+    const API_URL = 'http://localhost:3000/books';
+    const booksList = document.getElementById('books-list');
+    const editFormModal = document.getElementById('edit-form-modal');
+    const editBookForm = document.getElementById('edit-book-form');
+    const closeEditModalButton = document.getElementById('close-edit-modal');
+    const viewDetailsModal = document.getElementById('view-details-modal');
+    const closeDetailsModalButton = document.getElementById('close-details-modal');
+    const addBookButton = document.getElementById('add-book-button');
     const searchInput = document.getElementById('search-input');
     const searchButton = document.getElementById('search-button');
     const clearButton = document.getElementById('clear-button');
-    const booksList = document.getElementById('books-list');
-    const noResults = document.getElementById('no-results');
-    const bookDetailsModal = document.getElementById('book-details-modal');
-    const closeModalButton = document.getElementById('close-modal');
-    const favoritesButton = document.getElementById('favorites-button');
+    const noResultsMessage = document.getElementById('no-results');
 
-    // Favorites array
-    let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+    let booksData = [];
 
-    // Fetch books from the Open Library API
-    function fetchBooks(query) {
-        const apiUrl = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}`;
-
-        fetch(apiUrl)
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error('Failed to fetch data');
-                }
-                return response.json();
+    // Fetch and Display Books
+    const fetchBooks = () => {
+        fetch(API_URL)
+            .then(response => response.json())
+            .then(books => {
+                booksData = books;
+                displayBooks(books);
             })
-            .then((data) => {
-                const exactMatches = data.docs.filter(
-                    (book) => book.title && book.title.toLowerCase() === query.toLowerCase()
-                );
+            .catch(error => console.error('Error fetching books:', error));
+    };
 
-                if (exactMatches.length > 0) {
-                    displayBooks(exactMatches);
-                    noResults.style.display = 'none';
-                } else {
-                    booksList.innerHTML = '';
-                    noResults.style.display = 'block';
-                }
-            })
-            .catch((error) => {
-                console.error('Error fetching books:', error);
-                booksList.innerHTML = '';
-                noResults.style.display = 'block';
-            });
-    }
-
-    // Display books in the results section
-    function displayBooks(books) {
+    const displayBooks = (books) => {
         booksList.innerHTML = '';
+        if (books.length === 0) {
+            noResultsMessage.style.display = 'block';
+            return;
+        }
+        noResultsMessage.style.display = 'none';
 
         books.forEach((book) => {
-            const title = book.title || 'No title available';
-            const authors = book.author_name ? book.author_name.join(', ') : 'No author available';
-            const publishYear = book.first_publish_year || 'No publish year available';
-            const coverImage = book.cover_i
-                ? `https://covers.openlibrary.org/b/id/${book.cover_i}-L.jpg`
-                : 'https://via.placeholder.com/120x180.png';
-
             const bookElement = document.createElement('div');
             bookElement.classList.add('book-item');
+
+            // Use placeholder if cover is missing
+            
+            const coverImage = book.link && isValidUrl(book.link) 
+                ? book.link 
+                : 'https://via.placeholder.com/150';
+
             bookElement.innerHTML = `
-                <img src="${coverImage}" alt="${title}" /> 
-                <h3>${title}</h3>
-                <p>By ${authors}</p>
-                <p>Published: ${publishYear}</p>
-                <button class="view-details" data-book='${JSON.stringify({
-                    title: title,
-                    authors: authors,
-                    publishYear: publishYear,
-                    coverImage: coverImage,
-                    key: book.key,
-                })}'>View Details</button>
-                <button class="add-to-favorites" data-book='${JSON.stringify({
-                    title: title,
-                    authors: authors,
-                    publishYear: publishYear,
-                    coverImage: coverImage,
-                })}'>${isFavorite(title) ? 'Remove from Favorites' : 'Add to Favorites'}</button>
+                <img src="${coverImage}" alt="${book.title}" onerror="this.src='https://via.placeholder.com/150';">
+                <h3>${book.title}</h3>
+                <p><strong>Author:</strong> ${book.author}</p>
+                <p><strong>Year:</strong> ${book.year || 'Unknown'}</p>
+                <div class="actions">
+                    <button class="view-details-button" data-id="${book.id}">View Details</button>
+                    <button class="edit-button" data-id="${book.id}">Edit</button>
+                    <button class="delete-button" data-id="${book.id}">Delete</button>
+                </div>
             `;
 
-            bookElement.querySelector('.view-details').addEventListener('click', function () {
-                openBookDetailsModal(JSON.parse(this.getAttribute('data-book')));
-            });
+            // Helper function to validate URLs
+            function isValidUrl(string) {
+                try {
+                    new URL(string);
+                    return true;
+                } catch (err) {
+                    return false;
+                }
+            }
 
-            bookElement.querySelector('.add-to-favorites').addEventListener('click', function () {
-                toggleFavorite(JSON.parse(this.getAttribute('data-book')));
-            });
+                        
+
+            // View Details Button
+            bookElement.querySelector('.view-details-button').addEventListener('click', () => openDetailsModal(book));
+
+            // Edit Button
+            bookElement.querySelector('.edit-button').addEventListener('click', () => openEditModal(book));
+
+            // Delete Button
+            bookElement.querySelector('.delete-button').addEventListener('click', () => deleteBook(book.id));
 
             booksList.appendChild(bookElement);
         });
-    }
+    };
 
-    // Check if a book is already in favorites
-    function isFavorite(title) {
-        return favorites.some((fav) => fav.title === title);
-    }
+    const openEditModal = (book = {}) => {
+        document.getElementById('book-title').value = book.title || '';
+        document.getElementById('book-author').value = book.author || '';
+        document.getElementById('book-year').value = book.year || '';
+        document.getElementById('book-cover').value = book.cover || '';
+        document.getElementById('book-description').value = book.description || '';
+        editBookForm.dataset.id = book.id || '';
+        editFormModal.style.display = 'flex';
+    };
 
-    // Toggle a book between favorites
-    function toggleFavorite(book) {
-        if (isFavorite(book.title)) {
-            favorites = favorites.filter((fav) => fav.title !== book.title);
-            alert('Book removed from favorites!');
-        } else {
-            favorites.push(book);
-            alert('Book added to favorites!');
-        }
+    const openDetailsModal = (book) => {
+        document.getElementById('details-title').textContent = book.title;
+        document.getElementById('details-author').textContent = book.author;
+        document.getElementById('details-year').textContent = book.year || 'Unknown';
+        document.getElementById('details-description').textContent = book.description;
+        viewDetailsModal.style.display = 'flex';
+    };
 
-        localStorage.setItem('favorites', JSON.stringify(favorites));
-
-        if (booksList.innerHTML.includes('Remove from Favorites')) {
-            viewFavorites();
-        }
-    }
-
-    // Open the modal with detailed information about a book
-    function openBookDetailsModal(book) {
-        const { title, authors, publishYear, coverImage, key } = book;
-
-        document.getElementById('book-title').textContent = title || 'No title available';
-        document.getElementById('book-author').textContent = `By ${authors || 'No author available'}`;
-        document.getElementById('book-description').textContent = `First Published: ${
-            publishYear || 'No publish year available'
-        }`;
-        document.getElementById('book-cover').src = coverImage || 'https://via.placeholder.com/200x300.png';
-
-        fetch(`https://openlibrary.org${key}.json`)
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error('Failed to fetch book details');
-                }
-                return response.json();
+    const saveBook = (e) => {
+        e.preventDefault();
+        const bookId = editBookForm.dataset.id;
+        const bookData = {
+            title: document.getElementById('book-title').value,
+            author: document.getElementById('book-author').value,
+            year: parseInt(document.getElementById('book-year').value, 10),
+            cover: document.getElementById('book-cover').value,
+            description: document.getElementById('book-description').value,
+        };
+        const method = bookId ? 'PUT' : 'POST';
+        const url = bookId ? `${API_URL}/${bookId}` : API_URL;
+        fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(bookData),
+        })
+            .then(() => {
+                editFormModal.style.display = 'none';
+                fetchBooks();
             })
-            .then((details) => {
-                const summary = details.description
-                    ? typeof details.description === 'string'
-                        ? details.description
-                        : details.description.value
-                    : 'No summary available for this book.';
-                document.getElementById('book-description').textContent = summary;
-            })
-            .catch((error) => {
-                console.error('Error fetching book details:', error);
-                document.getElementById('book-description').textContent = 'Failed to load summary.';
-            });
+            .catch(error => console.error('Error saving book:', error));
+    };
 
-        bookDetailsModal.style.display = 'flex';
-    }
+    const deleteBook = (bookId) => {
+        fetch(`${API_URL}/${bookId}`, { method: 'DELETE' })
+            .then(() => fetchBooks())
+            .catch(error => console.error('Error deleting book:', error));
+    };
 
-    // Display the list of favorite books
-    function viewFavorites() {
-        if (favorites.length > 0) {
-            displayBooks(favorites);
-            noResults.style.display = 'none';
-        } else {
-            booksList.innerHTML = '';
-            noResults.style.display = 'block';
-            noResults.textContent = 'You have no favorite books yet.';
-        }
-    }
+    const filterBooks = () => {
+        const query = searchInput.value.toLowerCase();
+        const filteredBooks = booksData.filter(
+            book =>
+                book.title.toLowerCase().includes(query) ||
+                book.author.toLowerCase().includes(query)
+        );
+        displayBooks(filteredBooks);
+    };
 
-    // Event listeners
-    searchButton.addEventListener('click', () => fetchBooks(searchInput.value.trim()));
-    clearButton.addEventListener('click', () => {
+    const clearSearch = () => {
         searchInput.value = '';
-        booksList.innerHTML = '';
-        noResults.style.display = 'none';
-    });
-    favoritesButton.addEventListener('click', viewFavorites);
-    closeModalButton.addEventListener('click', () => (bookDetailsModal.style.display = 'none'));
+        displayBooks(booksData);
+    };
+
+    searchButton.addEventListener('click', filterBooks);
+    clearButton.addEventListener('click', clearSearch);
+    editBookForm.addEventListener('submit', saveBook);
+    closeEditModalButton.addEventListener('click', () => editFormModal.style.display = 'none');
+    closeDetailsModalButton.addEventListener('click', () => viewDetailsModal.style.display = 'none');
+    addBookButton.addEventListener('click', () => openEditModal());
+    fetchBooks();
 });

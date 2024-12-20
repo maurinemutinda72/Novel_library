@@ -4,86 +4,66 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Novel Library</title>
-    <!-- Link to external CSS -->
     <link rel="stylesheet" href="novels.css">
+    <script defer src="novels.js"></script>
 </head>
 <body>
-    <!-- Header Section -->
     <header class="header">
         <div class="header-content">
             <h1 class="site-title">My Novel Library</h1>
             <p class="site-tagline">Discover your next favorite book</p>
         </div>
         <div class="search-container">
-
-             <!-- Images Section -->
-        <div class="header-images">
-            <img 
-                src="https://images.theconversation.com/files/45159/original/rptgtpxd-1396254731.jpg?ixlib=rb-4.1.0&q=45&auto=format&w=754&fit=clip" 
-                alt="Bookshelf Image" 
-                class="header-image"
-            />
-            <img 
-                src="https://i.guim.co.uk/img/media/5a87aa3797fcdca6ef7874a7e8e958bec5ce759c/0_0_1772_1063/master/1772.jpg?width=620&quality=85&auto=format&fit=max&s=31155a7a5c538534833ecc21db3f1e77" 
-                alt="Person Reading a Book" 
-                class="header-image"
-            />
-        </div>
-            <!-- Search input and button -->
-            <input
-                type="text"
-                id="search-input"
-                class="search-input"
-                placeholder="Search by title or author..."
-                aria-label="Search for books"
-            />
+            
+            <input type="text" id="search-input" class="search-input" placeholder="Search by title or author..." aria-label="Search for books">
             <button id="search-button" class="search-button">Search</button>
-            <button id="clear-button" class="clear-button">Clear</button> <!-- Clear Button -->
+            <button id="clear-button" class="clear-button">Clear</button>
+            <button id="add-book-button" class="add-book-button">Add New Book</button>
         </div>
-        <!-- View Favorites Button -->
-        <div class="favorites-container">
-            <button id="favorites-button" class="favorites-button">View Favorites</button>
-        </div>
-        
     </header>
 
-    <!-- Main Content Section -->
     <main>
-        <!-- Books List Section -->
         <section id="books-list" class="books-list">
             <!-- Dynamically populated book cards go here -->
         </section>
-
-        <!-- No Results Message -->
         <div id="no-results" class="no-results" style="display: none;">
             No books found. Please try a different search.
         </div>
     </main>
- 
-    <!-- Book Details Modal -->
-    <div id="book-details-modal" class="book-details-modal">
+
+    <div id="edit-form-modal" class="book-details-modal" style="display: none;">
         <div class="modal-content">
-            <!-- Close button for the modal -->
-            <button id="close-modal" class="close-modal">&times;</button>
-            <!-- Displays the book's cover image -->
-            <img id="book-cover" class="book-cover" src="" alt="Book Cover" />
-            <!-- Displays the book's title -->
-            <h2 id="book-title" class="book-title"></h2>
-            <!-- Displays the author's name -->
-            <h4 id="book-author" class="book-author"></h4>
-            <!-- Displays the book's description -->
-            <p id="book-description" class="book-description"></p>
+            <form id="edit-book-form">
+                <h2 id="form-title">Add/Edit Book</h2>
+                <label for="book-title">Title</label>
+                <input type="text" id="book-title" name="title" required>
+                <label for="book-author">Author</label>
+                <input type="text" id="book-author" name="author" required>
+                <label for="book-year">Year</label>
+                <input type="number" id="book-year" name="year" required>
+                <label for="book-cover">Cover URL</label>
+                <input type="url" id="book-cover" name="cover" placeholder="http://example.com/image.jpg">
+                <label for="book-description">Description</label>
+                <textarea id="book-description" name="description" required></textarea>
+                <button type="submit">Save</button>
+                <button type="button" id="close-edit-modal">Cancel</button>
+            </form>
         </div>
     </div>
 
-    <!-- Footer Section -->
-    <footer class="footer">
-        <!-- Footer text providing basic site information -->
-        <p>&copy; 2024 My Novel Library. All rights reserved.</p>
-    </footer>
+    <div id="view-details-modal" class="book-details-modal" style="display: none;">
+        <div class="modal-content">
+            <h2 id="details-title">Book Title</h2>
+            <p><strong>Author:</strong> <span id="details-author"></span></p>
+            <p><strong>Year:</strong> <span id="details-year"></span></p>
+            <p><strong>Description:</strong></p>
+            <p id="details-description"></p>
+            <button id="close-details-modal">Close</button>
+        </div>
+    </div>
 
-    <!-- Link to external JavaScript -->
-    <script src="novels.js"></script>
+    <footer class="footer">
+       <p class="copyright"> © 2024 My Novel Library | All rights reserved.</p>
+    </footer>
 </body>
 </html>
-
